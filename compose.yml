@@ -1,0 +1,23 @@
+services:
+  influxdb:
+    extends:
+      file: ./docker/influxdb/docker-compose.yml
+      service: influxdb
+
+  ingest:
+    build:
+      context: ./ingest
+    container_name: ingest
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUX_URL=${INFLUX_URL}
+      - INFLUX_ORG=${INFLUX_ORG}
+      - INFLUX_BUCKET=${INFLUX_BUCKET}
+      - INFLUX_TOKEN=${INFLUX_TOKEN}
+    restart: "no"
+
+volumes:
+  influxdb-data:
+  influxdb-config:
+

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# VSCode
+.vscode/
+
+# Windows
+.DS_Store
+Thumbs.db
+
+# Local data
+data/
+*.csv
+
+# Docker
+**/influxdb-data/
+**/influxdb-config/
