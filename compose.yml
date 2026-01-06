@@ -6,7 +6,7 @@ services:
     depends_on:
       - influxdb
     environment:
-      - INFLUX_URL=http://localhost:8086
+      - INFLUX_URL=${INFLUX_URL}
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
       - INFLUX_TOKEN=${INFLUX_TOKEN}
