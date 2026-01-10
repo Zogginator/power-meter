@@ -1,6 +1,12 @@
 # client to the EON API
-# 
-import requests, json
+# TODOs:
+#   - exception handlin esp. SAP
+#   - Token manangement: re-request access token if auth fails
+#   - mapping of the MeasuremenPoint fields with the fields Eon provides. No it is hardwired eg. in_kwh : Num1
+#   - loging 
+
+
+import requests, json, logging
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -8,14 +14,13 @@ from urllib.parse import quote
 from pathlib import Path
 from typing import Mapping
 
-token = "8Y98sGKHgokRhbb_A2T04zavhZdHm1iE"
-assert token, "EON_TOKEN env var not set"
-TOKEN_PATH = Path.home() / "OneDrive" / "Documents" / "Projects" /"power-meter" /".power_meter" / "eon" / "token.json"
+
+log = logging.getLogger(__name__)
 
 
 @dataclass (frozen=True)
 class EonQuery:
-    start_day: datetime     # only the day matters, time is discarded
+    start_day: datetime     # only the day matters, time isshould be discarded
     end_day: datetime       #same
     pod: str = "HU000210F11-E647651230609-4000001" # hard wired for the time being
     measured_vars: str = "+A,-A" #full list: +A,-A,+Ri,-Rc,+R,-R
@@ -77,7 +82,6 @@ class EonClient:
             f"EndDate=datetime'{q.end_day.isoformat()}'"
             f")"
         )
-        print( f"EndDate=datetime'{q.end_day.isoformat()}',")
         return (
             f"{base}/{quote(key_part, safe='()=,:\'')}"
             f"?$expand=MeasDatas"
@@ -90,7 +94,8 @@ class EonClient:
             "authorizationerp": f"Bearer {token}",
             "X-Requested-With": "X",
         }
-    def _fetch_meas(self) -> dict:                                  # This function calls the API
+    def _fetch_meas(self) -> dict: 
+        log.info("Fetch form Eon API started")                                 # This function calls the API
         token = self.token_store.load()
 
         if not token:
@@ -101,6 +106,7 @@ class EonClient:
         
         r = requests.get(url=url, headers=headers, timeout=30)
         if r.ok:
+            log.info("Succesful fetch from EON")
             return r.json()
 
         sap_err = parse_sap_odata_error(r)
@@ -147,20 +153,6 @@ class EonClient:
     
 
 
-query = EonQuery(
-    pod="HU000210F11-E647651230609-4000001",
-    measured_vars="+A,-A",
-    interval=1,
-    start_day=datetime(2026, 1, 6, 0, 1, 0),
-    end_day=datetime(2026, 1, 6, 23, 59, 0),
-)
 
-ts = TokenStore(path=TOKEN_PATH)
-
-
-client=EonClient(query, ts)
-result= client.get_measurements()
-
-print(result.points[0])
 
 
