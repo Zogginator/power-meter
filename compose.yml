@@ -10,6 +10,8 @@ services:
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
       - INFLUX_TOKEN=${INFLUX_TOKEN}
+    volumes:
+      - ./state:/state
     restart: "no"
 
 

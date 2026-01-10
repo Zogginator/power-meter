@@ -10,8 +10,6 @@ from typing import Optional
 #token = "8Y98sGKHgokRhbb_A2T04zavhZdHm1iE"
 #assert token, "EON_TOKEN env var not set"
 TOKEN_PATH = Path.home() / "OneDrive" / "Documents" / "Projects" /"power-meter" / "data" / "token.json"
-print(TOKEN_PATH)
-
 @dataclass
 class TokenStore:
     path: Path
@@ -106,7 +104,6 @@ print(url)
 def build_headers(token: str) -> dict:
     return {
         "Accept": "application/json",
-        # nálad ez a kritikus:
         "authorizationerp": f"Bearer {token}",
         "X-Requested-With": "X",
     }
