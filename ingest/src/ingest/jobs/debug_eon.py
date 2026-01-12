@@ -12,7 +12,7 @@ from ingest.influx.writer import write_series
 log = logging.getLogger(__name__)
 
 #token = "8Y98sGKHgokRhbb_A2T04zavhZdHm1iE"
-TOKEN_PATH = Path.home() / "OneDrive" / "Documents" / "Projects" /"power-meter" /".power_meter" / "eon" / "token.json"
+TOKEN_PATH = Path(os.environ["EON_TOKEN_PATH"])
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
         start_day=datetime(2026, 1, 6, 0, 0, 1),
         end_day=datetime(2026, 1, 6, 23, 59, 59),
         )
-
+    
     ts = TokenStore(path=TOKEN_PATH)
 
 

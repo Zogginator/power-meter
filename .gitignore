@@ -8,7 +8,7 @@ venv/
 .env
 .env.*
 !.env.example
-.power_meter/eon
+.power_meter/
 
 # VSCode
 .vscode/

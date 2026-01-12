@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ingest/src/ /app/ingest/src/
+COPY src/ /app/ingest/src/
 
 ENV PYTHONPATH=/app/ingest/src
 ENV PYTHONUNBUFFERED=1

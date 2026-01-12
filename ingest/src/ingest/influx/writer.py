@@ -11,7 +11,6 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from ingest.config import INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET, INFLUX_TOKEN
 
-INFLUX_URL = "http://localhost:8086"    # remove if run in a container
 
 log = logging.getLogger(__name__)
 
@@ -41,11 +40,12 @@ def write_series(ser: MeasurementSeries) -> None:
 
         record.append(pt)
     log.info(record[0])
+   
 
     with InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG) as client:
         write_api = client.write_api(write_options=SYNCHRONOUS)     # SYNCHRONOUS -> wait until write finished
         try:
-            log.info("Writing %d points to Influx measurement=%s", len(record))
+            log.info("Writing %d points to Influx measurements", len(record))
             write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=record)
             log.info("Write done")
         except Exception as e:

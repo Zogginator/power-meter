@@ -6,6 +6,7 @@
 #   - loging 
 #   - build in date interval validation (30 days, ) 
 
+from __future__ import annotations
 
 
 import requests, json, logging
