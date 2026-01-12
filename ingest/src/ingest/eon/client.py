@@ -4,6 +4,8 @@
 #   - Token manangement: re-request access token if auth fails
 #   - mapping of the MeasuremenPoint fields with the fields Eon provides. No it is hardwired eg. in_kwh : Num1
 #   - loging 
+#   - build in date interval validation (30 days, ) 
+
 
 
 import requests, json, logging
@@ -12,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from urllib.parse import quote
 from pathlib import Path
-from typing import Mapping
+
 
 
 log = logging.getLogger(__name__)
@@ -20,8 +22,13 @@ log = logging.getLogger(__name__)
 
 @dataclass (frozen=True)
 class EonQuery:
-    start_day: datetime     # only the day matters, time isshould be discarded
-    end_day: datetime       #same
+    # date range can should be 
+    # - max. 30 days in case of 15 minutes data (interval=1)
+    # - max. 180 days in case of daily data (interval=2)
+    # - max. 365 days in cas of monthly data (interval=3)
+    # it seems that data is data is valid until current day 
+    start_day: datetime     # only the day matters, time should be discarded in EONs own query T00:00:01
+    end_day: datetime       # same T23.59.59
     pod: str = "HU000210F11-E647651230609-4000001" # hard wired for the time being
     measured_vars: str = "+A,-A" #full list: +A,-A,+Ri,-Rc,+R,-R
     interval: int = 1 #1: 15 minutes, 2: day 3: month
@@ -29,7 +36,7 @@ class EonQuery:
     format: str = "json"
 
 @dataclass(frozen=True)
-class MeasurementSeries:
+class MeasurementSeries:        # The response data structure 
     pod_id: str
     interval: str
     source: str
@@ -41,7 +48,7 @@ class MeasurementPoint:
     values: dict[str, float]
 
 @dataclass
-class TokenStore:
+class TokenStore:       # to be refined
     path: Path
 
     def load(self) -> Optional[str]:
@@ -52,7 +59,7 @@ class TokenStore:
             data = json.loads(self.path.read_text(encoding="utf-8"))
             tok = data.get("token")
             return tok if isinstance(tok, str) and tok else None
-        except Exception:                                               ##more meaningful exception needed!"Token path exists, but token load failed"
+        except Exception:                ##more meaningful exception needed!"Token path exists, but token load failed"
 
             return None
 
@@ -76,7 +83,7 @@ class EonClient:
         key_part = (
             f"MeasData("
             f"Pod='{q.pod}',"
-            f"MeasVarList='{q.measured_vars}',"
+            f"MeasVarList='{q.measured_vars}',"   # full list: +A,-A,+Ri,-Rc,+R,-R
             f"Interval='{q.interval}',"
             f"StartDate=datetime'{q.start_day.isoformat()}',"
             f"EndDate=datetime'{q.end_day.isoformat()}'"
@@ -95,7 +102,7 @@ class EonClient:
             "X-Requested-With": "X",
         }
     def _fetch_meas(self) -> dict: 
-        log.info("Fetch form Eon API started")                                 # This function calls the API
+        log.info("Fetch form Eon API started")          # This function calls the API
         token = self.token_store.load()
 
         if not token:
@@ -134,7 +141,7 @@ class EonClient:
                 "out_kwh": self._to_float(row.get("Num2"))}
         )
 
-    def get_measurements(self) -> MeasurementSeries:                    ### This is the main function
+    def get_measurements(self) -> MeasurementSeries:            ### This is the main function
         payload = self._fetch_meas()
         points = []
 

@@ -5,8 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ ./src/
+COPY ingest/src/ /app/ingest/src/
 
+ENV PYTHONPATH=/app/ingest/src
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "-m", "ingest.jobs.smoke_write"]
+CMD ["python", "-m", "ingest.jobs.debug_eon"]

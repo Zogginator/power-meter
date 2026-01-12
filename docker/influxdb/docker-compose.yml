@@ -15,7 +15,13 @@ services:
       - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_INIT_BUCKET}
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_INIT_ADMIN_TOKEN}
     restart: unless-stopped
+    networks:
+      - power_meter_net
 
 volumes:
   influxdb-data:
   influxdb-config:
+
+networks:
+  power_meter_net:
+    external: true
