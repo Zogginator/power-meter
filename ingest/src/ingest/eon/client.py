@@ -28,10 +28,10 @@ class EonQuery:
     # - max. 180 days in case of daily data (interval=2)
     # - max. 365 days in cas of monthly data (interval=3)
     # it seems that data is data is valid until current day 
-    start_day: datetime     # only the day matters, time should be discarded in EONs own query T00:00:01
-    end_day: datetime       # same T23.59.59
-    pod: str = "HU000210F11-E647651230609-4000001" # hard wired for the time being
-    measured_vars: str = "+A,-A" #full list: +A,-A,+Ri,-Rc,+R,-R
+    start_date: datetime     # only the day matters, time should be discarded in EONs own query T00:00:01
+    end_date: datetime       # same T23.59.59
+    pod: str                 # power meter id
+    var_mappings: list      # "+A,-A" normally, full list: +A,-A,+Ri,-Rc,+R,-R
     interval: int = 1 #1: 15 minutes, 2: day 3: month
     language: str = "H"   
     format: str = "json"
@@ -81,13 +81,16 @@ class EonClient:
     def _build_eon_url(self):    
         base = "https://e-portal.eon-hungaria.com/sap/opu/odata/sap/ZWB5_W1000"
         q=self.query
+        measured_vars=",".join(v["measured_var"] for v in q.var_mappings)   #normally: "+A, -A"
+        log.info("Measured vars: %s", measured_vars)
+    
         key_part = (
             f"MeasData("
             f"Pod='{q.pod}',"
-            f"MeasVarList='{q.measured_vars}',"   # full list: +A,-A,+Ri,-Rc,+R,-R
+            f"MeasVarList='{measured_vars}',"   # full list: +A,-A,+Ri,-Rc,+R,-R
             f"Interval='{q.interval}',"
-            f"StartDate=datetime'{q.start_day.isoformat()}',"
-            f"EndDate=datetime'{q.end_day.isoformat()}'"
+            f"StartDate=datetime'{q.start_date.isoformat()}',"
+            f"EndDate=datetime'{q.end_date.isoformat()}'"
             f")"
         )
         return (
@@ -104,7 +107,7 @@ class EonClient:
         }
     def _fetch_meas(self) -> dict: 
         log.info("Fetch form Eon API started")          # This function calls the API
-        token = self.token_store.load()
+        token = self.token_store.load()                 # get the stored token
 
         if not token:
             raise RuntimeError("No stored token. Refresh needed.")
@@ -120,7 +123,7 @@ class EonClient:
         sap_err = parse_sap_odata_error(r)
         if sap_err and is_auth_error(sap_err):
             token_store.clear() # useless token in recycle bin.
-            raise RuntimeError(f"Auth error ({sap_err.code}): {sap_err.message}. Token discarded, refresh/login needed.")
+            raise RuntimeError(f"Auth error ({sap_err.code}): {sap_err.message}. Token not valid, refresh/login needed.")
 
         # other error
         if sap_err:
@@ -135,11 +138,19 @@ class EonClient:
             return None
 
     def _normalize_meas(self, row):
+        values={}
+        for vm in self.query.var_mappings:
+            db_field=vm["db_field"]
+            response_field=vm["response_field"]
+            raw=row.get(response_field)
+            val= self._to_float(raw)
+
+            if val is not None:
+                values[db_field] = val            #values = {"in_kwh": 0,001,"out_kwh":0.002}
+
         return MeasurementPoint(
             timestamp = int(row["Timestamp"][6:-2]) // 1000, # ms > sec
-            values = {
-                "in_kwh":  self._to_float(row.get("Num1")),
-                "out_kwh": self._to_float(row.get("Num2"))}
+            values = values
         )
 
     def get_measurements(self) -> MeasurementSeries:            ### This is the main function

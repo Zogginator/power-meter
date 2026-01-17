@@ -12,6 +12,7 @@ services:
       INFLUX_URL: "http://influxdb:8086"
       PYTHONPATH: /app/ingest/src
       EON_TOKEN_PATH: "/app/.power_meter/eon/token.json"
+      EON_SOURCE_CONFIG_PATH: "/app/.power_meter/eon/source_config.json"
 
     networks:
       - power_meter_net
