@@ -38,7 +38,7 @@ def write_series(ser: MeasurementSeries) -> None:
                 pt.field(field, value)
 
         record.append(pt)
-    log.info("First recorsd: ", record[0])
+    
    
 
     with InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG) as client:

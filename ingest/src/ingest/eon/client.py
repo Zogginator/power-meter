@@ -73,6 +73,34 @@ class TokenStore:       # to be refined   - aupposed to be the acces token manag
             pass
             # self.path.unlink()            ## not yet
 
+@dataclass
+class SapODataError(Exception):
+    http_status: int
+    code: str
+    message: str
+
+def parse_sap_odata_error(resp) -> Optional[SapODataError]:
+    ct = (resp.headers.get("content-type") or "").lower()
+    if "application/json" not in ct:
+        return None
+    try:
+        j = resp.json()
+    except Exception:
+        return None
+
+    err = j.get("error")
+    if not isinstance(err, dict):
+        return None
+
+    code = err.get("code") or ""
+    msg = ""
+    m = err.get("message")
+    if isinstance(m, dict):
+        msg = m.get("value") or ""
+    elif isinstance(m, str):
+        msg = m
+
+    return SapODataError(resp.status_code, code, msg)
 class EonClient:
     def __init__(self, query: EonQuery, token_store: TokenStore):
         self.query = query
@@ -121,11 +149,7 @@ class EonClient:
             return r.json()
 
         sap_err = parse_sap_odata_error(r)
-        if sap_err and is_auth_error(sap_err):
-            token_store.clear() # useless token in recycle bin.
-            raise RuntimeError(f"Auth error ({sap_err.code}): {sap_err.message}. Token not valid, refresh/login needed.")
-
-        # other error
+        
         if sap_err:
             raise RuntimeError(f"SAP OData error {sap_err.http_status} ({sap_err.code}): {sap_err.message}")
         r.raise_for_status()

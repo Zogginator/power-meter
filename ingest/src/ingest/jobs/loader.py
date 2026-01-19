@@ -32,16 +32,26 @@ def load_meas(start_date: datetime, end_date: datetime):
 
 
     client=EonClient(query, ts)
-    result= client.get_measurements()
+    try:
+        result= client.get_measurements()
+    except Exception as e:
+        log.exception("Failed to fetch measurements from EON API")
+        raise
 
-    def fmt_ts_utc(ts: int) -> str:
-        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    if result.points:
+        first = result.points[0]
+        last = result.points[-1]
+        log.info("First point: %s %s", fmt_ts_utc(first.timestamp), first.values)
+        log.info("Last point:  %s %s", fmt_ts_utc(last.timestamp), last.values)
 
-    log.info("First point: %s %s", fmt_ts_utc(result.points[0].timestamp),  result.points[0].values)
-    log.info("Total count: %d measurement points.", len(result.points))
+        write_series(result)
+    else:
+        log.warning("No datapoints returned for the requested range.")
+        log.info("Total count: %d measurement points.", len(result.points))
     
-    write_series(result)
 
+def fmt_ts_utc(ts: int) -> str:
+        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
 def build_query(start_day, end_day, config):
     if start_day > end_day: 

@@ -19,7 +19,7 @@ MAX_QUERY_DAYS = 30   #days
 log = logging.getLogger(__name__)
 
 def run_adhoc ():
-    load_meas(datetime(2026,1,14), datetime(2026,1,15))
+    load_meas(datetime(2023,5,10), datetime(2023,6,9))
 
 
 def run_daily():
@@ -33,11 +33,9 @@ def run_daily():
         lts_day= last_ts_with_data().replace(hour=0, minute=0, second=0, microsecond=0)
     else:
         lts_day = today
-        log.info("There is no data in the DB. Ingest starts with yesterday day.")
+        log.info("There is no data in the DB. Ingest starts with yesterday.")
     
-   
-    print(f"Last timestamp with data:", lts_day,"  datapoints: ", daily_datapoints(lts_day))
-    print(lts_day, today)
+
     delta_days = (today - lts_day).days 
    
     print("Delta: ", delta_days)
@@ -55,5 +53,5 @@ def run_daily():
     return None
 
 if __name__ == "__main__":
-    run_daily()
-    #run_adhoc()
+    #run_daily()
+    run_adhoc()
