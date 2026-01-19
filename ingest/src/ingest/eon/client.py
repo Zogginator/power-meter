@@ -39,36 +39,36 @@ class EonQuery:
 @dataclass(frozen=True)
 class MeasurementSeries:        # The response data structure 
     pod_id: str
-    interval: str
-    source: str
-    points: list[MeasurementPoint]
+    interval: str               # tipically 15 min
+    source: str                 # API (Eon)
+    points: list[MeasurementPoint] #tipically in_kwh,, out_kwh, timestamp
 
 @dataclass(frozen=True)
-class MeasurementPoint:
-    timestamp: datetime
-    values: dict[str, float]
+class MeasurementPoint:         
+    timestamp: datetime         # timestamp in sec precision epoch time
+    values: dict[str, float]    # tipically {in_iwh:x.xx, out_kwh: y:yyy} 
 
 @dataclass
-class TokenStore:       # to be refined
-    path: Path
+class TokenStore:       # to be refined   - aupposed to be the acces token manager
+    path: Path      
 
     def load(self) -> Optional[str]:
         
         if not self.path.exists():
             return None
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
-            tok = data.get("token")
+            data = json.loads(self.path.read_text(encoding="utf-8"))  #tlets get the token from a json file
+            tok = data.get("token")     # gimme the token
             return tok if isinstance(tok, str) and tok else None
         except Exception:                ##more meaningful exception needed!"Token path exists, but token load failed"
 
             return None
 
-    def save(self, token: str) -> None:
+    def save(self, token: str) -> None:         #not used yet
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps({"token": token}, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def clear(self) -> None:
+    def clear(self) -> None:     #not used yet
         if self.path.exists():
             pass
             # self.path.unlink()            ## not yet
@@ -79,7 +79,7 @@ class EonClient:
         self.token_store = token_store
 
     def _build_eon_url(self):    
-        base = "https://e-portal.eon-hungaria.com/sap/opu/odata/sap/ZWB5_W1000"
+        base = "https://e-portal.eon-hungaria.com/sap/opu/odata/sap/ZWB5_W1000"   #TODO: move to config
         q=self.query
         measured_vars=",".join(v["measured_var"] for v in q.var_mappings)   #normally: "+A, -A"
         log.info("Measured vars: %s", measured_vars)
@@ -115,7 +115,7 @@ class EonClient:
         url = self._build_eon_url()    
         headers = self._build_headers(token)
         
-        r = requests.get(url=url, headers=headers, timeout=30)
+        r = requests.get(url=url, headers=headers, timeout=30)  #let GET the data now
         if r.ok:
             log.info("Succesful fetch from EON")
             return r.json()
@@ -139,17 +139,20 @@ class EonClient:
 
     def _normalize_meas(self, row):
         values={}
-        for vm in self.query.var_mappings:
-            db_field=vm["db_field"]
+        for vm in self.query.var_mappings:              # in the source_config file the labels to be used in the databse and the fields in the raw data are defined and paired
+            db_field=vm["db_field"]                     # e.g. {"measured_var": "+A", "response_field": "Value1", "db_field": "in_kwh"},
             response_field=vm["response_field"]
             raw=row.get(response_field)
-            val= self._to_float(raw)
+            val= self._to_float(raw)                    # str -> float
 
             if val is not None:
-                values[db_field] = val            #values = {"in_kwh": 0,001,"out_kwh":0.002}
+                values[db_field] = val                  #values = {"in_kwh": 0,001,"out_kwh":0.002}
 
+        
+        timestamp = int(row["Timestamp"][6:-2]) // 1000 # ms > sec
+        
         return MeasurementPoint(
-            timestamp = int(row["Timestamp"][6:-2]) // 1000, # ms > sec
+            timestamp = timestamp,
             values = values
         )
 
@@ -158,8 +161,9 @@ class EonClient:
         points = []
 
         for r in payload["d"]["MeasDatas"]["results"]:
-            point = self._normalize_meas(r)
-            points.append(point)
+            point = self._normalize_meas(r)                     #glean data from raw response
+            if point.values:                                    #do not add data point if there is no data, values={}
+                points.append(point)
 
         return MeasurementSeries(
             pod_id = self.query.pod,

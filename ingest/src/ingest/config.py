@@ -11,4 +11,5 @@ def env(name: str, default: str | None = None) -> str:
 INFLUX_URL = env("INFLUX_URL")
 INFLUX_ORG = env("INFLUX_ORG")
 INFLUX_BUCKET = env("INFLUX_BUCKET")
+INFLUX_MEASUREMENT = env("INFLUX_MEASUREMENT")
 INFLUX_TOKEN = env("INFLUX_TOKEN")

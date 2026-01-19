@@ -3,28 +3,30 @@ import logging
 import json
 
 from pathlib import Path
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 
 from ingest.logging_setup import setup_console
 from ingest.eon.client import EonClient, EonQuery, TokenStore, MeasurementSeries, MeasurementPoint
 from ingest.influx.writer import write_series
+from ingest.influx.reader import last_ts_with_data, daily_datapoints
+
 
 
 log = logging.getLogger(__name__)
 
-#token = "8Y98sGKHgokRhbb_A2T04zavhZdHm1iE"
+
 TOKEN_PATH = Path(os.environ["EON_TOKEN_PATH"])
 SOURCE_CONFIG_PATH = Path(os.environ["EON_SOURCE_CONFIG_PATH"])
 
-def main():
+
+
+def load_meas(start_date: datetime, end_date: datetime):
     setup_console(os.getenv("LOG_LEVEL", "INFO"))
-    log.info("Debug EON ingest starts")
     
     with open(SOURCE_CONFIG_PATH, "r", encoding="utf-8") as f:
         config = json.load(f)
 
-
-    query = build_query(datetime(2026,1,10), datetime(2026,1,10), config)
+    query = build_query(start_date, end_date, config)
 
     ts = TokenStore(path=TOKEN_PATH)
 
@@ -32,14 +34,18 @@ def main():
     client=EonClient(query, ts)
     result= client.get_measurements()
 
-    log.info("First %s", result.points[0])
+    def fmt_ts_utc(ts: int) -> str:
+        return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+
+    log.info("First point: %s %s", fmt_ts_utc(result.points[0].timestamp),  result.points[0].values)
     log.info("Total count: %d measurement points.", len(result.points))
+    
     write_series(result)
 
 
 def build_query(start_day, end_day, config):
     if start_day > end_day: 
-        raise ValueError("start_day must be <= end_day")
+        raise ValueError("Start_day must be <= end_day")
     
     query=EonQuery(
         pod=config["pod"],
@@ -50,10 +56,5 @@ def build_query(start_day, end_day, config):
         )
     return query
 
-
-
-
-if __name__ == "__main__":
-    main()
 
 
