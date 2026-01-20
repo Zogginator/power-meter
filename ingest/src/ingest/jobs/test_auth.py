@@ -7,8 +7,8 @@ from urllib.parse import quote
 from pathlib import Path
 from typing import Optional
 
-#token = "8Y98sGKHgokRhbb_A2T04zavhZdHm1iE"
-#assert token, "EON_TOKEN env var not set"
+
+
 TOKEN_PATH = Path.home() / "OneDrive" / "Documents" / "Projects" /"power-meter" / "data" / "token.json"
 @dataclass
 class TokenStore:
