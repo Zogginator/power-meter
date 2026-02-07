@@ -11,6 +11,7 @@ services:
     environment:
       INFLUX_URL: "http://influxdb:8086"
       PYTHONPATH: /app/ingest/src
+
       LOG_LEVEL: INFO
       LOG_DIR: /app/logs 
         
@@ -19,12 +20,12 @@ services:
 
     networks:
       - power_meter_net
-      
+
     volumes:
-      - ./secrets:/app/secrets
-      - ./state:/app/state
-      - ./config:/app/config
-      - ./logs:/app/logs
+      - ${POWER_METER_HOME}/secrets:/app/secrets:ro
+      - ${POWER_METER_HOME}/config:/app/config:ro
+      - ${POWER_METER_HOME}/state:/app/state
+      - ${POWER_METER_HOME}/logs:/app/logs
       - ./ingest/src:/app/ingest/src:ro
 
     # one-shot futás: a CMD-t a Dockerfile is adhatja, itt felülírhatod
