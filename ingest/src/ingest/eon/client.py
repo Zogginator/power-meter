@@ -2,9 +2,7 @@
 # TODOs:
 #   - exception handlin esp. SAP
 #   - Token manangement: re-request access token if auth fails
-#   - mapping of the MeasuremenPoint fields with the fields Eon provides. No it is hardwired eg. in_kwh : Num1
-#   - loging 
-#   - build in date interval validation (30 days, ) 
+#   - build/improve in date interval validation (30 days, ) 
 
 from __future__ import annotations
 
@@ -15,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from urllib.parse import quote
 from pathlib import Path
+from typing import Optional
 
 
 
@@ -32,20 +31,20 @@ class EonQuery:
     end_date: datetime       # same T23.59.59
     pod: str                 # power meter id
     var_mappings: list      # "+A,-A" normally, full list: +A,-A,+Ri,-Rc,+R,-R
-    interval: int = 1 #1: 15 minutes, 2: day 3: month
+    interval: int = 1       #1: 15 minutes, 2: day 3: month
     language: str = "H"   
     format: str = "json"
 
 @dataclass(frozen=True)
 class MeasurementSeries:        # The response data structure 
     pod_id: str
-    interval: str               # tipically 15 min
+    interval: int               # tipically 15 min
     source: str                 # API (Eon)
-    points: list[MeasurementPoint] #tipically in_kwh,, out_kwh, timestamp
+    points: list[MeasurementPoint] #tipically in_kwh, out_kwh, timestamp
 
 @dataclass(frozen=True)
 class MeasurementPoint:         
-    timestamp: datetime         # timestamp in sec precision epoch time
+    timestamp: int         # timestamp in sec precision epoch time
     values: dict[str, float]    # tipically {in_iwh:x.xx, out_kwh: y:yyy} 
 
 @dataclass
@@ -173,7 +172,7 @@ class EonClient:
                 values[db_field] = val                  #values = {"in_kwh": 0,001,"out_kwh":0.002}
 
         
-        timestamp = int(row["Timestamp"][6:-2]) // 1000 # ms > sec
+        timestamp = int(row["Timestamp"][6:-2])  //1000  # ms > sec
         
         return MeasurementPoint(
             timestamp = timestamp,

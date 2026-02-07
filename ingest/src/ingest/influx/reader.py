@@ -1,13 +1,12 @@
+from __future__ import annotations
+
 import os
 import logging
 
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
-from ingest.logging_setup import setup_console
-
-
-from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 from ingest.config import INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET, INFLUX_MEASUREMENT, INFLUX_TOKEN
 
@@ -20,7 +19,7 @@ GRANULARITY_MAP = {
     3: "1mo",
 }
 
-def last_ts_with_data () -> datetime:
+def last_ts_with_data () -> datetime | None:
     query = f"""
     from(bucket: "{INFLUX_BUCKET}") 
         |> range(start: 0) 
@@ -28,11 +27,10 @@ def last_ts_with_data () -> datetime:
     """ 
     tables= db_query(query)
     try:
-        last_ts = max(r.get_time() for t in tables for r in t.records)
-    except(ValueError):
-        last_ts = None
+        return max(r.get_time() for t in tables for r in t.records)
+    except ValueError:
+        return None
     
-    return(last_ts)
 
 def daily_datapoints(dt : datetime):
    

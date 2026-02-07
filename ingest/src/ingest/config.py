@@ -1,6 +1,5 @@
 import os
 
-
 def env(name: str, default: str | None = None) -> str:
     v = os.getenv(name, default)
     if v is None or v == "":

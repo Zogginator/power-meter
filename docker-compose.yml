@@ -3,7 +3,7 @@ services:
     build:
       context: ./ingest
       dockerfile: Dockerfile
-    container_name: power-meter-ingest
+  
 
     env_file:
       - .env
@@ -11,19 +11,24 @@ services:
     environment:
       INFLUX_URL: "http://influxdb:8086"
       PYTHONPATH: /app/ingest/src
-      EON_TOKEN_PATH: "/app/.power_meter/eon/token.json"
-      EON_SOURCE_CONFIG_PATH: "/app/.power_meter/eon/source_config.json"
+      LOG_LEVEL: INFO
+      LOG_DIR: /app/logs 
+        
+      EON_TOKEN_PATH: "/app/secrets/token.json"
+      EON_SOURCE_CONFIG_PATH: "/app/config/source_config.json"
 
     networks:
       - power_meter_net
-
+      
     volumes:
-      - ./.power_meter:/app/.power_meter
+      - ./secrets:/app/secrets
       - ./state:/app/state
+      - ./config:/app/config
+      - ./logs:/app/logs
       - ./ingest/src:/app/ingest/src:ro
 
     # one-shot futás: a CMD-t a Dockerfile is adhatja, itt felülírhatod
-    command: ["python", "-m", "ingest.jobs.debug_eon"]
+    command: ["python", "-m", "ingest.jobs.daily"]
     restart: "no"
 
 networks:

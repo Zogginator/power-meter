@@ -1,0 +1,10 @@
+{
+  "pod": "HU000210F11-E647651230609-4000001",
+  "interval": {"code" : 1, "name" : "15min"},
+  "timezone": "Europe/Budapest",
+  "availability_time": "06:30",
+  "var_mappings": [
+    {"measured_var": "+A", "response_field": "Value1", "db_field": "in_kwh"},
+    {"measured_var": "-A", "response_field": "Value2", "db_field": "out_kwh"}
+  ]
+}

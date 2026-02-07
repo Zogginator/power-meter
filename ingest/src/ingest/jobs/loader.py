@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import logging
 import json
@@ -5,10 +7,9 @@ import json
 from pathlib import Path
 from datetime import datetime, time, timezone
 
-from ingest.logging_setup import setup_console
 from ingest.eon.client import EonClient, EonQuery, TokenStore, MeasurementSeries, MeasurementPoint
 from ingest.influx.writer import write_series
-from ingest.influx.reader import last_ts_with_data, daily_datapoints
+
 
 
 
@@ -21,12 +22,12 @@ SOURCE_CONFIG_PATH = Path(os.environ["EON_SOURCE_CONFIG_PATH"])
 
 
 def load_meas(start_date: datetime, end_date: datetime):
-    setup_console(os.getenv("LOG_LEVEL", "INFO"))
+    log.info("Start fetch data between %s and %s", start_date, end_date)
     
-    with open(SOURCE_CONFIG_PATH, "r", encoding="utf-8") as f:
+    with open(SOURCE_CONFIG_PATH, "r", encoding="utf-8") as f:    #what and how to query from Eon
         config = json.load(f)
 
-    query = build_query(start_date, end_date, config)
+    query = build_query(start_date, end_date, config) 
 
     ts = TokenStore(path=TOKEN_PATH)
 
@@ -47,7 +48,8 @@ def load_meas(start_date: datetime, end_date: datetime):
         write_series(result)
     else:
         log.warning("No datapoints returned for the requested range.")
-        log.info("Total count: %d measurement points.", len(result.points))
+        
+
     
 
 def fmt_ts_utc(ts: int) -> str:

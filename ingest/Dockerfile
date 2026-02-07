@@ -10,4 +10,4 @@ COPY src/ /app/ingest/src/
 ENV PYTHONPATH=/app/ingest/src
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "-m", "ingest.jobs.debug_eon"]
+CMD ["python", "-m", "ingest.jobs.daily"]

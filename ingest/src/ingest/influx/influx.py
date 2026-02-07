@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-
+from influxdb_client.client.influxdb_client import InfluxDBClient
+from influxdb_client.client.write.point import Point
+from influxdb_client.domain.write_precision import WritePrecision
 from ingest.config import INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET, INFLUX_TOKEN
+import logging
 
+log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class EnergyPoint:

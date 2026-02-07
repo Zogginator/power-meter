@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "power-meter"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "influxdb-client>=1.49,<2.0",
+  "python-dateutil>=2.9",
+  "requests>=2.31",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

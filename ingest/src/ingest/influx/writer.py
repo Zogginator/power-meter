@@ -1,20 +1,21 @@
-import os
+from __future__ import annotations
+
 import logging
 
-from pathlib import Path
-from datetime import datetime, timezone
+from typing import cast
 
-from ingest.logging_setup import setup_console
-from ingest.eon.client import EonClient, EonQuery, TokenStore, MeasurementSeries, MeasurementPoint
+from ingest.eon.client import MeasurementSeries
 
-from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.influxdb_client import InfluxDBClient
+from influxdb_client.client.write.point import Point
+from influxdb_client.domain.write_precision import WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from ingest.config import INFLUX_URL, INFLUX_ORG, INFLUX_BUCKET, INFLUX_MEASUREMENT,INFLUX_TOKEN
 
 
 log = logging.getLogger(__name__)
 
-GRANULARITY_MAP = {
+GRANULARITY_MAP: dict[int, str] = {
     1: "15m",
     2: "1d",
     3: "1mo",
@@ -45,7 +46,7 @@ def write_series(ser: MeasurementSeries) -> None:
         write_api = client.write_api(write_options=SYNCHRONOUS)     # SYNCHRONOUS -> wait until write finished
         try:
             log.info("Writing %d points to Influx measurements", len(record))
-            write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=record, write_precision=WritePrecision.S)
+            write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=record, write_precision=cast(WritePrecision, WritePrecision.S)) #cast: to shush pylance
             log.info("Write done")
         except Exception as e:
             log.exception("Influx write failed")

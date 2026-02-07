@@ -8,7 +8,7 @@ venv/
 .env
 .env.*
 !.env.example
-.power_meter/
+
 
 # VSCode
 .vscode/
@@ -18,9 +18,12 @@ venv/
 Thumbs.db
 
 # Local data
-data/
+
 *.csv
 tmp/
+secrets/
+state/
+logs/
 
 # Docker
 **/influxdb-data/
