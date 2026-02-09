@@ -1,14 +1,11 @@
 import os
 import logging
-import json
 
 from pathlib import Path
 from datetime import datetime, time, timezone, timedelta
 
 from ingest.logging_setup import setup_logging
-from ingest.eon.client import EonClient, EonQuery, TokenStore, MeasurementSeries, MeasurementPoint
-from ingest.influx.writer import write_series
-from ingest.influx.reader import last_ts_with_data, daily_datapoints
+from ingest.influx.reader import last_ts_with_data
 from ingest.jobs.loader import load_meas
 
 TOKEN_PATH = Path(os.environ["EON_TOKEN_PATH"])
@@ -18,8 +15,6 @@ MAX_QUERY_DAYS = 5   #days, normally 30
 
 log = logging.getLogger("daily")
 
-def run_adhoc ():
-    load_meas(datetime(2023,5,10), datetime(2023,6,9))
 
 
 def run_daily():
@@ -55,4 +50,4 @@ def run_daily():
 if __name__ == "__main__":
     setup_logging()
     run_daily()
-    #run_adhoc()
+
